@@ -3,10 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#000000">
 <title>hqrits // harits</title>
+<script>document.documentElement.classList.add('js');</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=VT323&display=swap" rel="stylesheet">
 <style>
   :root{
     --black:#000000;
@@ -17,11 +19,27 @@
     --white:#f2f2f0;
     --dim:#8a8a86;
     --dimmer:#5a5a56;
-    --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+    /* the SOUL. stays monochrome to keep things lowkey.
+       swap to #ff0000 for the classic red heart. */
+    --soul:#f2f2f0;
+
+    --mono:'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    --pixel:'VT323', 'JetBrains Mono', ui-monospace, monospace;
+    --ease:cubic-bezier(.2,.7,.2,1);
+
+    /* 8x7 pixel heart, used as a mask everywhere */
+    --heart:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 7'%3E%3Cpath d='M1 0H3V1H5V0H7V1H8V4H7V5H6V6H5V7H3V6H2V5H1V4H0V1H1Z'/%3E%3C/svg%3E");
   }
 
   *{ box-sizing:border-box; }
-  html{ scroll-behavior:smooth; }
+  html{
+    scroll-behavior:smooth;
+    scroll-padding-top:72px;
+    scrollbar-gutter:stable;
+    scrollbar-width:thin;
+    scrollbar-color:#2a2a2a #000;
+  }
   ::selection{ background:var(--white); color:var(--black); }
 
   body{
@@ -32,6 +50,7 @@
     font-size:14px;
     line-height:1.6;
     -webkit-font-smoothing:antialiased;
+    -webkit-tap-highlight-color:transparent;
   }
 
   a{ color:inherit; }
@@ -40,6 +59,14 @@
     max-width:920px;
     margin:0 auto;
     padding:0 24px;
+  }
+
+  .sr{
+    position:absolute;
+    width:1px; height:1px;
+    overflow:hidden;
+    clip:rect(0 0 0 0);
+    white-space:nowrap;
   }
 
   /* ---------- background grid texture ---------- */
@@ -55,108 +82,162 @@
     mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 90%);
   }
 
+  /* =========================================================
+     UNDERTALE BITS
+     ========================================================= */
+
+  /* typewriter characters */
+  .ch{ opacity:0; }
+  .ch.on{ opacity:1; }
+  .dlg-text{ position:relative; }
+
+  .star{ color:var(--white); }
+
+  @keyframes beat{
+    0%,100%{ transform:scale(1); }
+    14%{ transform:scale(1.18); }
+    28%{ transform:scale(1); }
+    42%{ transform:scale(1.1); }
+    56%{ transform:scale(1); }
+  }
+
+  /* the heart selector: shared by every menu-like thing */
+  nav.mainnav a::before,
+  .proj-head .tree::after,
+  .track .idx::after,
+  .skill-cat li::after,
+  .contact-row::before,
+  .send-btn::before{
+    content:'';
+    position:absolute;
+    width:12px;
+    height:10.5px;
+    background:var(--soul);
+    -webkit-mask:var(--heart) center/contain no-repeat;
+            mask:var(--heart) center/contain no-repeat;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease, transform .3s var(--ease);
+  }
+
+  /* dialogue box (hero + contact) */
+  .dialog{
+    display:grid;
+    grid-template-columns:auto 1fr;
+    column-gap:.7ch;
+    max-width:340px;
+    margin-top:14px;
+    padding:11px 16px 12px;
+    border:3px solid var(--white);
+    background:var(--black);
+    font-family:var(--pixel);
+    font-size:21px;
+    line-height:1.25;
+    letter-spacing:.04em;
+    color:var(--white);
+  }
+  .dialog.wide{ max-width:480px; margin-top:16px; }
+
   /* ---------- intro ---------- */
   .intro{
     position:fixed;
     inset:0;
     z-index:200;
     background:var(--black);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    text-align:center;
-    padding:24px;
-    transition:opacity .9s ease, visibility .9s ease;
+    overflow:hidden;
+    cursor:pointer;
+    transition:opacity .8s ease, visibility .8s ease;
   }
   .intro.hide{
     opacity:0;
     visibility:hidden;
     pointer-events:none;
   }
-  .intro-text{
+
+  .stage{
     position:absolute;
-    font-size:clamp(20px, 4.4vw, 34px);
-    font-weight:600;
-    color:var(--white);
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:24px 24px 64px;
     opacity:0;
-    letter-spacing:-0.01em;
-    max-width:90vw;
+    transition:opacity .4s ease;
+    pointer-events:none;
   }
-  .intro-small{
-    font-size:clamp(13px, 2.2vw, 16px);
-    font-weight:400;
-    color:var(--dim);
-    max-width:34ch;
-    letter-spacing:0;
-  }
+  .stage.show{ opacity:1; }
 
-  /* stage 1: name glitches in, holds, glitches out */
-  #introName{
-    animation:
-      glitch-in .5s steps(2, end) 0.15s forwards,
-      glitch-flicker 2.2s linear 0.65s 1,
-      glitch-out .35s steps(2, end) 2.65s forwards;
+  .title-stage{ gap:26px; }
+  .soul-lg{
+    width:56px;
+    height:49px;
+    background:var(--soul);
+    -webkit-mask:var(--heart) center/contain no-repeat;
+            mask:var(--heart) center/contain no-repeat;
+    transform-origin:50% 55%;
+    animation:beat 1.4s ease-in-out infinite;
   }
-  @keyframes glitch-in{
-    0%{ opacity:0; transform:translate3d(0,0,0); clip-path:inset(0 0 0 0); }
-    20%{ opacity:1; transform:translate3d(-6px,0,0); clip-path:inset(10% 0 60% 0); }
-    40%{ opacity:1; transform:translate3d(5px,0,0); clip-path:inset(55% 0 10% 0); }
-    60%{ opacity:1; transform:translate3d(-3px,0,0); clip-path:inset(20% 0 40% 0); }
-    100%{ opacity:1; transform:translate3d(0,0,0); clip-path:inset(0 0 0 0); }
-  }
-  @keyframes glitch-flicker{
-    0%, 100%{ opacity:1; transform:translate3d(0,0,0); }
-    3%{ opacity:.85; transform:translate3d(2px,0,0); }
-    6%{ opacity:1; transform:translate3d(-2px,0,0); }
-    9%{ opacity:1; transform:translate3d(0,0,0); }
-    52%{ opacity:.9; transform:translate3d(-1px,0,0); }
-    55%{ opacity:1; transform:translate3d(1px,0,0); }
-  }
-  @keyframes glitch-out{
-    0%{ opacity:1; transform:translate3d(0,0,0); clip-path:inset(0 0 0 0); filter:blur(0); }
-    50%{ opacity:.6; transform:translate3d(4px,0,0); clip-path:inset(30% 0 30% 0); filter:blur(1px); }
-    100%{ opacity:0; transform:translate3d(-8px,0,0); clip-path:inset(45% 0 45% 0); filter:blur(2px); }
-  }
-
-  /* stage 2: "hi." smooth fade in / out */
-  #introHi{
-    animation: soft-in .6s ease 3.0s forwards, soft-out .5s ease 4.2s forwards;
-  }
-  /* stage 3: closing line, smooth fade in, then whole overlay fades (handled by JS) */
-  #introWrong{
-    animation: soft-in .7s ease 4.7s forwards;
-  }
-  @keyframes soft-in{
-    from{ opacity:0; transform:translateY(6px); }
-    to{ opacity:1; transform:translateY(0); }
-  }
-  @keyframes soft-out{
-    from{ opacity:1; transform:translateY(0); }
-    to{ opacity:0; transform:translateY(-6px); }
-  }
-
-  @media (prefers-reduced-motion: reduce){
-    .intro{ transition:opacity .3s linear; }
-    .intro-text{ animation:none !important; opacity:0; }
-    #introWrong{ opacity:1; position:static; }
-  }
-
-  .intro-ascii{
-    position:absolute;
-    transform:translateY(-92px);
-    margin:0;
-    font-family:var(--mono);
-    font-size:clamp(9px, 1.6vw, 13px);
-    line-height:1.15;
+  .title-name{
+    font-family:var(--pixel);
+    font-size:clamp(30px, 7vw, 46px);
+    letter-spacing:.06em;
+    line-height:1;
+    min-height:1em;
     color:var(--white);
-    opacity:0;
+    position:relative;
     text-align:center;
-    animation:
-      glitch-in .5s steps(2, end) 0s forwards,
-      glitch-flicker 2.2s linear .5s 1,
-      glitch-out .35s steps(2, end) 2.65s forwards;
   }
 
+  .dlg{
+    display:grid;
+    width:min(560px, 88vw);
+    padding:18px 24px;
+    border:4px solid var(--white);
+    background:var(--black);
+    font-family:var(--pixel);
+    font-size:clamp(23px, 5vw, 31px);
+    line-height:1.3;
+    letter-spacing:.04em;
+    transform:translateY(8px);
+    transition:transform .5s var(--ease);
+  }
+  .stage.show .dlg{ transform:none; }
+  .dlg-page{
+    grid-area:1 / 1;
+    display:grid;
+    grid-template-columns:auto 1fr;
+    column-gap:.7ch;
+    visibility:hidden;
+  }
+  .dlg-page.on{ visibility:visible; }
+
+  .intro-ctl{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    padding:16px 24px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    font-family:var(--pixel);
+    font-size:18px;
+    letter-spacing:.05em;
+    color:var(--dimmer);
+  }
+  .intro-ctl button{
+    font:inherit;
+    letter-spacing:inherit;
+    color:var(--dim);
+    background:none;
+    border:0;
+    padding:6px 0;
+    cursor:pointer;
+    transition:color .15s ease;
+  }
+  .intro-ctl button:hover{ color:var(--white); }
+
+  /* ---------- ascii mini ---------- */
   .ascii-mini{
     font-family:var(--mono);
     font-size:11px;
@@ -165,7 +246,24 @@
     margin:0;
   }
 
-  .tree{ color:var(--dimmer); margin-right:4px; }
+  .tree{
+    position:relative;
+    display:inline-block;
+    color:var(--dimmer);
+    margin-right:4px;
+    transition:color .18s ease;
+  }
+
+  /* ---------- scroll reveals ---------- */
+  html.js .reveal{
+    opacity:0;
+    transform:translateY(12px);
+    transition:opacity .8s ease var(--d, 0s), transform .8s var(--ease) var(--d, 0s);
+  }
+  html.js .reveal.in{
+    opacity:1;
+    transform:none;
+  }
 
   /* ---------- nav ---------- */
   .topbar{
@@ -174,6 +272,7 @@
     z-index:50;
     background:rgba(0,0,0,0.82);
     backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
     border-bottom:1px solid var(--line);
   }
   .topbar-inner{
@@ -193,37 +292,55 @@
   }
   .brand b{ color:var(--white); font-weight:500; }
 
+  .topbar-right{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+
   nav.mainnav{
     display:flex;
     gap:2px;
   }
   nav.mainnav a{
+    position:relative;
     text-decoration:none;
     color:var(--dim);
     font-size:12.5px;
-    padding:6px 10px;
+    padding:6px 8px 6px 22px;
     border-radius:2px;
     transition:color .15s ease, background .15s ease;
-    position:relative;
   }
-  nav.mainnav a:hover{
+  nav.mainnav a:hover,
+  nav.mainnav a.active{
     color:var(--white);
     background:var(--panel);
   }
   nav.mainnav a::before{
-    content:'';
+    left:7px;
+    top:calc(50% - 5px);
+    transform:translateX(-4px);
+  }
+  nav.mainnav a:hover::before,
+  nav.mainnav a.active::before,
+  nav.mainnav a:focus-visible::before{
+    opacity:1;
+    transform:none;
   }
 
-  .navtoggle{
-    display:none;
+  .sfx, .navtoggle{
     background:none;
     border:1px solid var(--line);
-    color:var(--white);
+    color:var(--dim);
     font-family:var(--mono);
-    font-size:12px;
-    padding:6px 10px;
+    font-size:11px;
+    padding:5px 9px;
     cursor:pointer;
+    transition:color .15s ease, border-color .15s ease;
   }
+  .sfx:hover, .navtoggle:hover{ color:var(--white); border-color:var(--dimmer); }
+  .sfx[aria-pressed="true"]{ color:var(--white); border-color:var(--dim); }
+  .navtoggle{ display:none; color:var(--white); font-size:12px; padding:6px 10px; }
 
   /* ---------- hero ---------- */
   .hero{
@@ -297,6 +414,47 @@
     max-width:340px;
     font-size:12.5px;
   }
+
+  /* undertale-style stat line */
+  .hud{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:6px 14px;
+    margin-bottom:14px;
+    padding-bottom:12px;
+    border-bottom:1px solid var(--line);
+    font-family:var(--pixel);
+    font-size:19px;
+    line-height:1;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--white);
+  }
+  .hud-hp{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-left:auto;
+  }
+  .hp-bar{
+    position:relative;
+    width:44px;
+    height:12px;
+    background:var(--line);
+  }
+  .hp-bar i{
+    position:absolute;
+    inset:0;
+    background:var(--white);
+    transform-origin:left;
+  }
+  html.js .hp-bar i{
+    transform:scaleX(0);
+    transition:transform 1s steps(10) .9s;
+  }
+  html.js body.ready .hp-bar i{ transform:scaleX(1); }
+
   .status-row{ margin-bottom:10px; }
   .status-row:last-child{ margin-bottom:0; }
   .status-key{ color:var(--dimmer); }
@@ -353,10 +511,18 @@
     gap:48px;
   }
   .about-text p{
+    position:relative;
     color:var(--dim);
     font-size:13.5px;
     max-width:46ch;
     margin:0 0 16px;
+    padding-left:18px;
+  }
+  .about-text p::before{
+    content:'*';
+    position:absolute;
+    left:2px;
+    color:var(--dimmer);
   }
   .about-text p:last-child{ margin-bottom:0; }
 
@@ -387,7 +553,7 @@
     color:var(--white);
     padding:4px 0;
   }
-  .focus-list li::before{ content:'– '; color:var(--dimmer); }
+  .focus-list li::before{ content:'* '; color:var(--dimmer); }
 
   /* ---------- skills ---------- */
   .skills-grid{
@@ -408,38 +574,85 @@
   }
   .skill-cat ul{ list-style:none; margin:0; padding:0; }
   .skill-cat li{
+    position:relative;
     font-size:12.5px;
     color:var(--white);
-    padding:3px 0;
+    padding:3px 0 3px 18px;
   }
+  .skill-cat li::before{
+    content:'*';
+    position:absolute;
+    left:3px;
+    color:var(--dimmer);
+    transition:opacity .18s ease;
+  }
+  .skill-cat li::after{
+    left:1px;
+    top:calc(50% - 5px);
+    transform:scale(.6);
+  }
+  .skill-cat li:hover::before{ opacity:0; }
+  .skill-cat li:hover::after{ opacity:1; transform:none; }
 
   /* ---------- projects ---------- */
   .proj-list{ border-top:1px solid var(--line); }
-  .proj-row{
-    border-bottom:1px solid var(--line);
-    padding:18px 0;
-    cursor:pointer;
+  .proj-row{ border-bottom:1px solid var(--line); }
+
+  .proj-head{
     display:grid;
-    grid-template-columns:28px 1fr auto;
+    grid-template-columns:40px 1fr auto;
     align-items:baseline;
     gap:14px;
-    transition:background .15s ease;
+    padding:18px 12px;
+    cursor:pointer;
+    transition:background .2s ease;
   }
-  .proj-row:hover{ background:var(--panel); }
-  .proj-row .idx{ color:var(--dimmer); font-size:12px; }
-  .proj-row .name{ color:var(--white); font-size:14px; }
-  .proj-row .name .slash{ color:var(--dimmer); }
-  .proj-row .desc{ color:var(--dim); font-size:12px; display:block; margin-top:4px; }
-  .proj-row .type{ color:var(--dimmer); font-size:11px; white-space:nowrap; }
+  .proj-head:hover,
+  .proj-row.open .proj-head{ background:var(--panel); }
+  .proj-head:focus-visible{ outline:1px solid var(--white); outline-offset:-1px; }
 
-  .proj-detail{
-    display:none;
-    padding:16px 0 4px 42px;
-    border-top:1px dashed var(--line);
-    margin-top:14px;
+  .proj-head .idx{ color:var(--dimmer); font-size:12px; }
+  .proj-head .tree::after{
+    left:0;
+    top:calc(50% - 5px);
+    transform:scale(.6);
   }
-  .proj-row.open .proj-detail{ display:block; }
+  .proj-head:hover .tree,
+  .proj-row.open .tree{ color:transparent; }
+  .proj-head:hover .tree::after,
+  .proj-row.open .tree::after{ opacity:1; transform:none; }
+
+  .proj-head .name{ color:var(--white); font-size:14px; }
+  .proj-head .name .slash{ color:var(--dimmer); }
+  .proj-head .desc{ color:var(--dim); font-size:12px; display:block; margin-top:4px; }
+  .proj-head .type{ color:var(--dimmer); font-size:11px; white-space:nowrap; }
+
+  /* smooth accordion */
+  .proj-detail-wrap{
+    display:grid;
+    grid-template-rows:0fr;
+    transition:grid-template-rows .45s var(--ease);
+  }
+  .proj-row.open .proj-detail-wrap{ grid-template-rows:1fr; }
+  .proj-detail-inner{
+    min-height:0;
+    overflow:hidden;
+    visibility:hidden;
+    transition:visibility 0s .45s;
+  }
+  .proj-row.open .proj-detail-inner{
+    visibility:visible;
+    transition-delay:0s;
+  }
+  .proj-detail{
+    margin:0 12px;
+    padding:14px 0 22px 54px;
+    border-top:1px dashed var(--line);
+  }
   .proj-detail .quote{
+    display:grid;
+    grid-template-columns:auto 1fr;
+    column-gap:1ch;
     color:var(--dim);
     font-size:12.5px;
     font-style:italic;
@@ -470,19 +683,50 @@
     text-decoration:none;
     border-bottom:1px solid var(--dimmer);
     padding-bottom:1px;
+    transition:border-color .2s ease;
   }
+  .view-link:hover{ border-color:var(--white); }
+  .view-link .arr{
+    display:inline-block;
+    transition:transform .25s var(--ease);
+  }
+  .view-link:hover .arr{ transform:translateX(3px); }
 
   /* ---------- music ---------- */
+  .music-lead{
+    color:var(--dim);
+    font-size:13px;
+    max-width:46ch;
+    margin:-14px 0 24px;
+  }
   .track-list{ border-top:1px solid var(--line); }
   .track{
     display:grid;
     grid-template-columns:28px 24px 1fr auto;
     align-items:center;
     gap:14px;
-    padding:14px 0;
+    padding:14px 12px;
     border-bottom:1px solid var(--line);
+    transition:background .2s ease;
   }
-  .track .idx{ color:var(--dimmer); font-size:12px; }
+  .track:hover, .track.playing{ background:var(--panel); }
+  .track .idx{
+    position:relative;
+    color:var(--dimmer);
+    font-size:12px;
+    transition:color .18s ease;
+  }
+  .track .idx::after{
+    left:0;
+    top:calc(50% - 5px);
+    transform:scale(.6);
+  }
+  .track:hover .idx,
+  .track.playing .idx{ color:transparent; }
+  .track:hover .idx::after,
+  .track.playing .idx::after{ opacity:1; transform:none; }
+  .track.playing .idx::after{ animation:beat 1.2s ease-in-out infinite; }
+
   .track .play{
     width:22px; height:22px;
     border:1px solid var(--line);
@@ -493,24 +737,26 @@
     font-size:10px;
     display:flex; align-items:center; justify-content:center;
     padding:0;
+    transition:border-color .15s ease;
   }
   .track .play:hover{ border-color:var(--dim); }
   .track .fname{ font-size:13px; color:var(--white); }
   .track .ext{ color:var(--dimmer); }
+
+  /* chunky segmented progress bar */
   .track .bar{
-    width:80px;
-    height:2px;
-    background:var(--line);
+    width:84px;
+    height:6px;
     position:relative;
     overflow:hidden;
+    background:repeating-linear-gradient(90deg, var(--line) 0 4px, transparent 4px 6px);
   }
   .track .bar span{
     position:absolute; inset:0;
-    background:var(--white);
+    background:repeating-linear-gradient(90deg, var(--white) 0 4px, transparent 4px 6px);
     width:0%;
-    transition:width .2s linear;
   }
-  .track.playing .bar span{ animation:play-progress 14s linear forwards; }
+  .track.playing .bar span{ animation:play-progress 14s steps(14) forwards; }
   @keyframes play-progress{ from{width:0%;} to{width:100%;} }
 
   .audio-note{
@@ -539,16 +785,25 @@
   }
   .contact-box .lead{ color:var(--dim); font-size:13px; margin-bottom:20px; }
   .contact-row{
+    position:relative;
     display:flex;
     justify-content:space-between;
     padding:8px 0;
     border-bottom:1px solid var(--line-soft);
     font-size:12.5px;
   }
+  .contact-row::before{
+    left:-20px;
+    top:calc(50% - 5px);
+    transform:translateX(-4px);
+  }
+  .contact-row:hover::before,
+  .contact-row:focus-within::before{ opacity:1; transform:none; }
   .contact-row .k{ color:var(--dimmer); }
   .contact-row a{ color:var(--white); text-decoration:none; }
   .contact-row a:hover{ text-decoration:underline; }
   .send-btn{
+    position:relative;
     margin-top:20px;
     width:100%;
     padding:10px 0;
@@ -558,8 +813,17 @@
     font-family:var(--mono);
     font-size:12.5px;
     cursor:pointer;
+    transition:background .2s ease;
+  }
+  .send-btn::before{
+    background:var(--black);
+    left:22px;
+    top:calc(50% - 5px);
+    transform:translateX(-4px);
   }
   .send-btn:hover{ background:#d8d8d5; }
+  .send-btn:hover::before,
+  .send-btn:focus-visible::before{ opacity:1; transform:none; }
 
   footer{
     padding:32px 0 60px;
@@ -577,45 +841,95 @@
     outline-offset:2px;
   }
 
+  /* ---------- reduced motion ---------- */
   @media (prefers-reduced-motion: reduce){
-    .cursor, .dot, .track.playing .bar span{ animation:none; }
+    html{ scroll-behavior:auto; }
+    .cursor, .dot, .soul-lg, .track.playing .idx::after{ animation:none; }
+    .track.playing .bar span{ animation-duration:14s; }
+    .intro{ transition:opacity .3s linear, visibility .3s linear; }
+    .stage{ transition:opacity .2s linear; }
+    .dlg{ transform:none; transition:none; }
+    html.js .reveal{ opacity:1; transform:none; transition:none; }
+    html.js .hp-bar i{ transform:scaleX(1); transition:none; }
+    .proj-detail-wrap, .proj-detail-inner{ transition:none; }
   }
 
   /* ---------- mobile ---------- */
-  @media (max-width: 720px){
+  @media (max-width: 760px){
     nav.mainnav{
-      position:fixed;
-      top:47px; left:0; right:0;
-      background:var(--black);
+      position:absolute;
+      top:100%; left:0; right:0;
+      background:rgba(0,0,0,0.96);
       border-bottom:1px solid var(--line);
       flex-direction:column;
+      gap:0;
       padding:6px 24px 14px;
-      display:none;
+      opacity:0;
+      visibility:hidden;
+      transform:translateY(-6px);
+      transition:opacity .25s ease, transform .3s var(--ease), visibility 0s .3s;
     }
-    nav.mainnav.show{ display:flex; }
-    nav.mainnav a{ padding:10px 0; border-bottom:1px solid var(--line-soft); }
+    nav.mainnav.show{
+      opacity:1;
+      visibility:visible;
+      transform:none;
+      transition-delay:0s;
+    }
+    nav.mainnav a{
+      padding:10px 0 10px 22px;
+      border-bottom:1px solid var(--line-soft);
+      border-radius:0;
+    }
+    nav.mainnav a:hover,
+    nav.mainnav a.active{ background:none; }
+    nav.mainnav a::before{ left:2px; }
     .navtoggle{ display:block; }
 
     .about-grid{ grid-template-columns:1fr; gap:32px; }
     .skills-grid{ grid-template-columns:repeat(2,1fr); }
     .hero{ padding-top:96px; min-height:auto; }
     .hero-meta-row{ margin-bottom:40px; }
+    .scroll-hint{ position:static; margin-top:40px; }
     section{ padding:64px 0; }
-    .proj-row{ grid-template-columns:22px 1fr; }
-    .proj-row .type{ grid-column:2; margin-top:4px; }
-    .proj-detail{ padding-left:0; }
-    .track{ grid-template-columns:22px 22px 1fr; }
+
+    .proj-head{ grid-template-columns:36px 1fr; padding:16px 10px; }
+    .proj-head .type{ grid-column:2; margin-top:-8px; }
+    .proj-detail{ padding-left:0; margin:0 10px; }
+    .track{ grid-template-columns:22px 22px 1fr; padding:14px 10px; }
     .track .bar{ display:none; }
+
+    .dialog, .dialog.wide{ max-width:none; }
+    .dlg{ border-width:3px; padding:16px 18px; }
   }
 </style>
+<noscript><style>.intro{ display:none !important; }</style></noscript>
 </head>
 <body>
 
-<div class="intro" id="intro" aria-hidden="true">
-  <pre class="intro-ascii" id="introAscii">█░░░█</pre>
-  <div class="intro-text" id="introName" data-glitch="hqrits // harits">hqrits // harits</div>
-  <div class="intro-text intro-line" id="introHi">hi.</div>
-  <div class="intro-text intro-line intro-small" id="introWrong">i have the skills. i just made the wrong choices.</div>
+<!-- ============ INTRO ============ -->
+<div class="intro" id="intro">
+  <div class="stage title-stage" id="stageTitle">
+    <div class="soul-lg"></div>
+    <div class="title-name" id="introName" data-say="hqrits // harits">hqrits // harits</div>
+  </div>
+
+  <div class="stage" id="stageDlg">
+    <div class="dlg">
+      <div class="dlg-page" id="pgHi">
+        <span class="star">*</span>
+        <span class="dlg-text" data-say="hi.">hi.</span>
+      </div>
+      <div class="dlg-page" id="pgWrong">
+        <span class="star">*</span>
+        <span class="dlg-text" data-say="i have the skills. i just made the wrong choices.">i have the skills. i just made the wrong choices.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="intro-ctl">
+    <button type="button" data-sfx aria-pressed="false">sound: off</button>
+    <span>[z] or click to skip</span>
+  </div>
 </div>
 
 <div class="bg-grid"></div>
@@ -623,22 +937,25 @@
 <header class="topbar">
   <div class="topbar-inner">
     <div class="brand">/home/<b>hqrits</b></div>
-    <nav class="mainnav" id="mainnav">
-      <a href="#about">about</a>
-      <a href="#skills">skills</a>
-      <a href="#projects">projects</a>
-      <a href="#music">music</a>
-      <a href="#devlog">devlog</a>
-      <a href="#contact">contact</a>
-    </nav>
-    <button class="navtoggle" id="navtoggle" aria-expanded="false" aria-controls="mainnav">menu</button>
+    <div class="topbar-right">
+      <nav class="mainnav" id="mainnav" aria-label="main">
+        <a href="#about">about</a>
+        <a href="#skills">skills</a>
+        <a href="#projects">projects</a>
+        <a href="#music">music</a>
+        <a href="#devlog">devlog</a>
+        <a href="#contact">contact</a>
+      </nav>
+      <button class="sfx" type="button" data-sfx aria-pressed="false">sound: off</button>
+      <button class="navtoggle" id="navtoggle" aria-expanded="false" aria-controls="mainnav">menu</button>
+    </div>
   </div>
 </header>
 
 <div class="wrap">
 
   <section class="hero" id="top">
-    <div class="hero-meta-row">
+    <div class="hero-meta-row reveal">
       <div>[001]<br>personal archive</div>
       <div style="text-align:right;">
         last updated: 2026<br>bali, id — utc+8
@@ -648,18 +965,23 @@
       </div>
     </div>
 
-    <h1 class="hero-name">hqrits<span class="slash">//</span>harits<span class="cursor"></span></h1>
+    <h1 class="hero-name reveal" style="--d:.1s">hqrits<span class="slash">//</span>harits<span class="cursor"></span></h1>
 
-    <div class="hero-roles">
+    <div class="hero-roles reveal" style="--d:.2s">
       <span>game developer</span>
       <span>web app dev</span>
       <span>music producer</span>
       <span>ui/ux</span>
     </div>
 
-    <div class="hero-sub">18 yrs old · id / eng / jp</div>
+    <div class="hero-sub reveal" style="--d:.3s">18 yrs old · id / eng / jp</div>
 
-    <div class="status-box">
+    <div class="status-box reveal" style="--d:.4s">
+      <div class="hud" aria-label="hqrits, level 18, 20 of 20 hp">
+        <span>hqrits</span>
+        <span>lv 18</span>
+        <span class="hud-hp"><span>hp</span><span class="hp-bar"><i></i></span><span>20 / 20</span></span>
+      </div>
       <div class="status-row">
         <div class="status-key">currently_building</div>
         <div class="status-val">something</div>
@@ -674,22 +996,27 @@
       </div>
     </div>
 
-    <div class="scroll-hint">line 001 — scroll to continue</div>
+    <div class="dialog reveal" style="--d:.5s">
+      <span class="star">*</span>
+      <span class="dlg-text" id="flavor" data-say="the air smells like unfinished projects.">the air smells like unfinished projects.</span>
+    </div>
+
+    <div class="scroll-hint reveal" style="--d:.6s">line 001 — scroll to continue</div>
   </section>
 
   <section id="about">
-    <div class="sec-head">
+    <div class="sec-head reveal">
       <h2><span class="num">01 //</span> about</h2>
       <div class="path">~/about</div>
     </div>
     <div class="about-grid">
-      <div class="about-text">
+      <div class="about-text reveal">
         <p>i'm harits.</p>
         <p>i've been making games and messing with web stuff for a while.</p>
         <p>sometimes i make music too.</p>
         <p>currently learning, building, breaking things, and starting again.</p>
       </div>
-      <div>
+      <div class="reveal" style="--d:.12s">
         <div class="info-panel">
           <div class="info-row"><span class="k">name</span><span class="v">hqrits</span></div>
           <div class="info-row"><span class="k">age</span><span class="v">18</span></div>
@@ -710,11 +1037,11 @@
   </section>
 
   <section id="skills">
-    <div class="sec-head">
+    <div class="sec-head reveal">
       <h2><span class="num">02 //</span> skills</h2>
       <div class="path">~/skills</div>
     </div>
-    <div class="skills-grid">
+    <div class="skills-grid reveal" style="--d:.08s">
       <div class="skill-cat">
         <div class="tag">game</div>
         <ul>
@@ -754,90 +1081,96 @@
   </section>
 
   <section id="projects">
-    <div class="sec-head">
+    <div class="sec-head reveal">
       <h2><span class="num">03 //</span> projects</h2>
       <div class="path">~/projects</div>
     </div>
-    <div class="proj-list" id="projlist">
+    <div class="proj-list reveal" id="projlist" style="--d:.08s">
 
       <div class="proj-row" data-proj="1">
-        <div class="idx"><span class="tree">├─</span>01</div>
-        <div>
-          <div class="name">decision<span class="slash">/</span></div>
-          <span class="desc">3d side-scrolling hack &amp; slash</span>
-          <div class="proj-detail">
-            <div class="meta-line">status: ongoing</div>
-            <div class="meta-line">type: game / experimental</div>
-            <div class="thumb">
-  <img src="https://storage.to/rq0WNyL6c" alt="preview">
-            </div>
-            <div class="quote">"still working on this."</div>
-            <a href="#" class="view-link" onclick="return false;">view project →</a>
+        <div class="proj-head" role="button" tabindex="0" aria-expanded="false">
+          <div class="idx"><span class="tree">├─</span>01</div>
+          <div>
+            <div class="name">decision<span class="slash">/</span></div>
+            <span class="desc">3d side-scrolling hack &amp; slash</span>
           </div>
+          <div class="type">game / experimental</div>
         </div>
-        <div class="type">game / experimental</div>
+        <div class="proj-detail-wrap"><div class="proj-detail-inner"><div class="proj-detail">
+          <div class="meta-line">status: ongoing</div>
+          <div class="meta-line">type: game / experimental</div>
+          <div class="thumb">preview — grayscale</div>
+          <div class="quote"><span>*</span><span class="dlg-text" data-say="still working on this.">still working on this.</span></div>
+          <a href="#" class="view-link" onclick="return false;">view project <span class="arr">→</span></a>
+        </div></div></div>
       </div>
 
       <div class="proj-row" data-proj="2">
-        <div class="idx"><span class="tree">├─</span>02</div>
-        <div>
-          <div class="name">project-hitori<span class="slash">/</span></div>
-          <span class="desc">japanese learning app</span>
-          <div class="proj-detail">
-            <div class="meta-line">status: in progress</div>
-            <div class="meta-line">type: web / education</div>
-            <div class="thumb">preview — grayscale</div>
-            <div class="quote">"built because i wanted to."</div>
-            <a href="#" class="view-link" onclick="return false;">view project →</a>
+        <div class="proj-head" role="button" tabindex="0" aria-expanded="false">
+          <div class="idx"><span class="tree">├─</span>02</div>
+          <div>
+            <div class="name">project-hitori<span class="slash">/</span></div>
+            <span class="desc">japanese learning app</span>
           </div>
+          <div class="type">web / education</div>
         </div>
-        <div class="type">web / education</div>
+        <div class="proj-detail-wrap"><div class="proj-detail-inner"><div class="proj-detail">
+          <div class="meta-line">status: in progress</div>
+          <div class="meta-line">type: web / education</div>
+          <div class="thumb">preview — grayscale</div>
+          <div class="quote"><span>*</span><span class="dlg-text" data-say="built because i wanted to.">built because i wanted to.</span></div>
+          <a href="#" class="view-link" onclick="return false;">view project <span class="arr">→</span></a>
+        </div></div></div>
       </div>
 
       <div class="proj-row" data-proj="3">
-        <div class="idx"><span class="tree">├─</span>03</div>
-        <div>
-          <div class="name">sochiai<span class="slash">/</span></div>
-          <span class="desc">personal ai workspace</span>
-          <div class="proj-detail">
-            <div class="meta-line">status: experimental</div>
-            <div class="meta-line">type: web / experiment</div>
-            <div class="thumb">preview — grayscale</div>
-            <div class="quote">"some of these probably shouldn't work."</div>
-            <a href="#" class="view-link" onclick="return false;">view project →</a>
+        <div class="proj-head" role="button" tabindex="0" aria-expanded="false">
+          <div class="idx"><span class="tree">├─</span>03</div>
+          <div>
+            <div class="name">sochiai<span class="slash">/</span></div>
+            <span class="desc">personal ai workspace</span>
           </div>
+          <div class="type">web / experiment</div>
         </div>
-        <div class="type">web / experiment</div>
+        <div class="proj-detail-wrap"><div class="proj-detail-inner"><div class="proj-detail">
+          <div class="meta-line">status: experimental</div>
+          <div class="meta-line">type: web / experiment</div>
+          <div class="thumb">preview — grayscale</div>
+          <div class="quote"><span>*</span><span class="dlg-text" data-say="some of these probably shouldn't work.">some of these probably shouldn't work.</span></div>
+          <a href="#" class="view-link" onclick="return false;">view project <span class="arr">→</span></a>
+        </div></div></div>
       </div>
 
       <div class="proj-row" data-proj="4">
-        <div class="idx"><span class="tree">└─</span>04</div>
-        <div>
-          <div class="name">music<span class="slash">/</span></div>
-          <span class="desc">unfinished things</span>
-          <div class="proj-detail">
-            <div class="meta-line">status: perpetual</div>
-            <div class="meta-line">type: audio / personal</div>
-            <div class="thumb">preview — grayscale</div>
-            <div class="quote">"not everything here is finished."</div>
-            <a href="#music" class="view-link">go to audio →</a>
+        <div class="proj-head" role="button" tabindex="0" aria-expanded="false">
+          <div class="idx"><span class="tree">└─</span>04</div>
+          <div>
+            <div class="name">music<span class="slash">/</span></div>
+            <span class="desc">unfinished things</span>
           </div>
+          <div class="type">audio / personal</div>
         </div>
-        <div class="type">audio / personal</div>
+        <div class="proj-detail-wrap"><div class="proj-detail-inner"><div class="proj-detail">
+          <div class="meta-line">status: perpetual</div>
+          <div class="meta-line">type: audio / personal</div>
+          <div class="thumb">preview — grayscale</div>
+          <div class="quote"><span>*</span><span class="dlg-text" data-say="not everything here is finished.">not everything here is finished.</span></div>
+          <a href="#music" class="view-link">go to audio <span class="arr">→</span></a>
+        </div></div></div>
       </div>
 
     </div>
   </section>
 
   <section id="music">
-    <div class="sec-head">
+    <div class="sec-head reveal">
       <h2><span class="num">04 //</span> audio</h2>
       <div class="path">~/music</div>
     </div>
-    <p style="color:var(--dim); font-size:13px; max-width:46ch; margin-top:-14px; margin-bottom:24px;">
-      sometimes i make music. mostly whatever sounds good.
+    <p class="music-lead reveal">
+      sometimes i make music. mostly whatever sounds good at 3am.
     </p>
-    <div class="track-list" id="tracklist">
+    <div class="track-list reveal" id="tracklist" style="--d:.08s">
       <div class="track" data-track="1">
         <div class="idx">01</div>
         <button class="play" aria-label="play">▶</button>
@@ -863,15 +1196,15 @@
         <div class="bar"><span></span></div>
       </div>
     </div>
-    <div class="audio-note">// no actual audio wired up here — swap in real files when ready</div>
+    <div class="audio-note reveal">// no actual audio wired up here — swap in real files when ready</div>
   </section>
 
   <section id="devlog">
-    <div class="sec-head">
+    <div class="sec-head reveal">
       <h2><span class="num">05 //</span> devlog</h2>
       <div class="path">~/devlog</div>
     </div>
-    <div class="devlog">
+    <div class="devlog reveal" style="--d:.08s">
       <div class="devlog-row"><div class="yr">2021</div><div class="txt">started making games</div></div>
       <div class="devlog-row"><div class="yr">2023</div><div class="txt">started experimenting with web development</div></div>
       <div class="devlog-row"><div class="yr">2024</div><div class="txt">more games, more unfinished projects</div></div>
@@ -881,17 +1214,21 @@
   </section>
 
   <section id="contact">
-    <div class="sec-head">
+    <div class="sec-head reveal">
       <h2><span class="num">06 //</span> contact</h2>
       <div class="path">~/contact</div>
     </div>
-    <div class="contact-box">
+    <div class="contact-box reveal" style="--d:.08s">
       <div class="lead">got something to talk about?</div>
-      <div class="contact-row"><span class="k">email</span><a href="mailto:hello@hqrits.dev">hqrits@gmail.com</a></div>
-      <div class="contact-row"><span class="k">instagram</span><a href="#" onclick="return false;">@hqrits</a></div>
+      <div class="contact-row"><span class="k">email</span><a href="mailto:hello@hqrits.dev">hello@hqrits.dev</a></div>
+      <div class="contact-row"><span class="k">instagram</span><a href="#" onclick="return false;">@hqrrts</a></div>
       <div class="contact-row"><span class="k">tiktok</span><a href="#" onclick="return false;">@hqrits</a></div>
-      <div class="contact-row"><span class="k">github</span><a href="#" onclick="return false;">github.com/Haritssss</a></div>
+      <div class="contact-row"><span class="k">github</span><a href="#" onclick="return false;">github.com/hqrits</a></div>
       <button class="send-btn" onclick="window.location.href='mailto:hello@hqrits.dev'">[ send message ]</button>
+    </div>
+    <div class="dialog wide reveal" style="--d:.16s">
+      <span class="star">*</span>
+      <span class="dlg-text" data-say="the sight of an empty inbox fills you with determination.">the sight of an empty inbox fills you with determination.</span>
     </div>
   </section>
 
@@ -904,63 +1241,344 @@
 </div>
 
 <script>
-  // intro sequence
-  (function(){
-    const intro = document.getElementById('intro');
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+(() => {
+  'use strict';
 
-    if (reduce){
-      setTimeout(() => intro.classList.add('hide'), 900);
-      return;
-    }
+  const $  = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    document.body.style.overflow = 'hidden';
-    const finish = () => {
-      intro.classList.add('hide');
-      document.body.style.overflow = '';
+  /* ------------------------------------------------------------
+     tiny sfx engine (off by default, toggle in the nav / intro)
+     ------------------------------------------------------------ */
+  const SFX = (() => {
+    let ctx = null, on = false, lastMove = 0;
+
+    const tone = (freq, dur, vol, type = 'square', when = 0) => {
+      if (!on || !ctx) return;
+      const t = ctx.currentTime + when;
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol, t + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(t); o.stop(t + dur + 0.03);
     };
 
-    // timed to land just after the "wrong choices" line has settled in
-    setTimeout(finish, 6600);
-    // let a click/tap skip it early
-    intro.addEventListener('click', finish, { once:true });
+    return {
+      get on(){ return on; },
+      set(v){
+        if (v){
+          if (!ctx){
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return;
+            try { ctx = new AC(); } catch (e) { return; }
+          }
+          if (ctx.state === 'suspended') ctx.resume();
+          on = true;
+        } else {
+          on = false;
+        }
+      },
+      talk(){ tone(300 + Math.random() * 50, 0.045, 0.035); },
+      tick(){ tone(720, 0.03, 0.02, 'triangle'); },
+      move(){
+        const n = performance.now();
+        if (n - lastMove < 70) return;
+        lastMove = n;
+        tone(520, 0.05, 0.025);
+      },
+      pick(){ tone(660, 0.06, 0.035); tone(990, 0.09, 0.035, 'square', 0.06); }
+    };
   })();
 
-  // mobile nav toggle
-  const navtoggle = document.getElementById('navtoggle');
-  const mainnav = document.getElementById('mainnav');
-  navtoggle.addEventListener('click', () => {
-    const showing = mainnav.classList.toggle('show');
-    navtoggle.setAttribute('aria-expanded', showing);
+  const sfxBtns = $$('[data-sfx]');
+  const paintSfx = () => sfxBtns.forEach(b => {
+    b.textContent = 'sound: ' + (SFX.on ? 'on' : 'off');
+    b.setAttribute('aria-pressed', String(SFX.on));
   });
-  mainnav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
-    mainnav.classList.remove('show');
-    navtoggle.setAttribute('aria-expanded', 'false');
+  sfxBtns.forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    SFX.set(!SFX.on);
+    paintSfx();
+    if (SFX.on) SFX.pick();
   }));
 
-  // project rows expand
-  document.querySelectorAll('.proj-row').forEach(row => {
-    row.addEventListener('click', (e) => {
-      if (e.target.closest('a')) return;
-      row.classList.toggle('open');
+  /* ------------------------------------------------------------
+     typewriter (per-character spans so layout never jumps)
+     ------------------------------------------------------------ */
+  const mkTok = () => ({ skip:false, cancel:false, wake:null });
+  const poke  = tok => { if (tok.wake) tok.wake(); };
+
+  const sleep = (ms, tok) => new Promise(res => {
+    if (tok && (tok.skip || tok.cancel)) { res(); return; }
+    const t = setTimeout(done, ms);
+    function done(){
+      clearTimeout(t);
+      if (tok && tok.wake === done) tok.wake = null;
+      res();
+    }
+    if (tok) tok.wake = done;
+  });
+
+  function prep(el, text){
+    el.textContent = '';
+    const sr = document.createElement('span');
+    sr.className = 'sr';
+    sr.textContent = text;
+    el.appendChild(sr);
+    const chars = [];
+    for (const ch of text){
+      const s = document.createElement('span');
+      s.className = 'ch';
+      s.setAttribute('aria-hidden', 'true');
+      s.textContent = ch;
+      el.appendChild(s);
+      chars.push(s);
+    }
+    return chars;
+  }
+
+  async function type(el, text, { speed = 40, sound = 'talk', tok = mkTok() } = {}){
+    const chars = prep(el, text);
+    if (REDUCE){ chars.forEach(c => c.classList.add('on')); return; }
+    for (let i = 0; i < chars.length; i++){
+      if (tok.cancel) return;
+      if (tok.skip){ chars.slice(i).forEach(c => c.classList.add('on')); return; }
+      chars[i].classList.add('on');
+      const c = chars[i].textContent;
+      if (sound && c !== ' ' && i % 2 === 0) SFX[sound]();
+      if (i < chars.length - 1){
+        const mult = '.!?'.includes(c) ? 6 : (c === ',' ? 3 : 1);
+        await sleep(speed * mult, tok);
+      }
+    }
+  }
+
+  const typeDialog = el => {
+    if (!el || el.dataset.done) return;
+    el.dataset.done = '1';
+    return type(el, el.dataset.say, { speed: 32 });
+  };
+
+  // hide all typed text until it's "spoken"
+  $$('[data-say]').forEach(el => prep(el, el.dataset.say));
+
+  /* ------------------------------------------------------------
+     intro: title card → dialogue box
+     ------------------------------------------------------------ */
+  const intro = $('#intro');
+  const shell = [$('.topbar'), $('.wrap')];
+  const SKIP = Symbol('skip');
+  const introTok = mkTok();
+  let finished = false;
+
+  const onKey = e => {
+    if (e.target.closest && e.target.closest('[data-sfx]')) return;
+    if (['Enter', ' ', 'Escape', 'z', 'Z', 'x', 'X'].includes(e.key)){
+      e.preventDefault();
+      skipIntro();
+    }
+  };
+  const skipIntro = () => { introTok.skip = true; poke(introTok); };
+
+  function finish(){
+    if (finished) return;
+    finished = true;
+    intro.classList.add('hide');
+    document.body.style.overflow = '';
+    shell.forEach(el => { el.inert = false; });
+    document.body.classList.add('ready');
+    $$('.hero .reveal').forEach(el => el.classList.add('in'));
+    window.removeEventListener('keydown', onKey);
+    setTimeout(() => typeDialog($('#flavor')), REDUCE ? 0 : 1100);
+    setTimeout(() => intro.remove(), 1100);
+  }
+
+  async function runIntro(){
+    document.body.style.overflow = 'hidden';
+    shell.forEach(el => { el.inert = true; });
+    intro.addEventListener('click', skipIntro);
+    window.addEventListener('keydown', onKey);
+
+    const tok = introTok;
+    const S = async ms => { await sleep(ms, tok); if (tok.skip) throw SKIP; };
+
+    const stageTitle = $('#stageTitle');
+    const stageDlg   = $('#stageDlg');
+    const pgHi       = $('#pgHi');
+    const pgWrong    = $('#pgWrong');
+    const nameEl     = $('#introName');
+
+    try {
+      // let the pixel font land so the first frame isn't a font swap
+      if (document.fonts && document.fonts.load){
+        await Promise.race([
+          Promise.all([document.fonts.load('30px VT323'), document.fonts.ready]).catch(() => {}),
+          sleep(1500)
+        ]);
+      }
+
+      if (REDUCE){
+        type($('.dlg-text', pgWrong), $('.dlg-text', pgWrong).dataset.say, { tok });
+        pgWrong.classList.add('on');
+        stageDlg.classList.add('show');
+        await S(1500);
+        return;
+      }
+
+      await S(200);
+      stageTitle.classList.add('show');                       // heart fades in, beating
+      await S(400);
+      await type(nameEl, nameEl.dataset.say, { speed: 45, sound: 'tick', tok });
+      await S(650);
+      stageTitle.classList.remove('show');
+      await S(420);
+
+      stageDlg.classList.add('show');                         // dialogue box
+      await S(300);
+      pgHi.classList.add('on');
+      await type($('.dlg-text', pgHi), 'hi.', { speed: 70, tok });
+      await S(700);
+      pgHi.classList.remove('on');
+      await S(200);
+      pgWrong.classList.add('on');
+      await type($('.dlg-text', pgWrong), $('.dlg-text', pgWrong).dataset.say, { speed: 30, tok });
+      await S(1000);
+      stageDlg.classList.remove('show');
+      await S(400);
+    } catch (err){
+      if (err !== SKIP) console.error(err);
+    } finally {
+      finish();
+    }
+  }
+
+  runIntro();
+
+  /* ------------------------------------------------------------
+     hover sfx + click sfx
+     ------------------------------------------------------------ */
+  const bindHover = sel => $$(sel).forEach(el =>
+    el.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') SFX.move(); })
+  );
+  ['nav.mainnav a', '.proj-head', '.track', '.contact-row', '.send-btn'].forEach(bindHover);
+  $$('nav.mainnav a, .send-btn').forEach(el => el.addEventListener('click', () => SFX.pick()));
+
+  /* ------------------------------------------------------------
+     mobile nav
+     ------------------------------------------------------------ */
+  const navtoggle = $('#navtoggle');
+  const mainnav = $('#mainnav');
+  const setNav = show => {
+    mainnav.classList.toggle('show', show);
+    navtoggle.setAttribute('aria-expanded', String(show));
+    navtoggle.textContent = show ? 'close' : 'menu';
+  };
+  navtoggle.addEventListener('click', () => setNav(!mainnav.classList.contains('show')));
+  mainnav.addEventListener('click', e => { if (e.target.closest('a')) setNav(false); });
+  window.addEventListener('keydown', e => { if (e.key === 'Escape') setNav(false); });
+
+  /* ------------------------------------------------------------
+     scroll-spy: the heart follows the section you're in
+     ------------------------------------------------------------ */
+  const links = $$('nav.mainnav a');
+  const linkMap = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  if ('IntersectionObserver' in window){
+    const spy = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        links.forEach(l => { l.classList.remove('active'); l.removeAttribute('aria-current'); });
+        const a = linkMap.get(e.target.id);
+        if (a){ a.classList.add('active'); a.setAttribute('aria-current', 'true'); }
+      });
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    $$('section[id]').forEach(s => spy.observe(s));
+  }
+
+  /* ------------------------------------------------------------
+     scroll reveals (+ lazy dialogue typing)
+     ------------------------------------------------------------ */
+  const revealTargets = $$('section:not(.hero) .reveal');
+  if ('IntersectionObserver' in window){
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        const el = e.target;
+        el.classList.add('in');
+        io.unobserve(el);
+        if (el.classList.contains('dialog')){
+          const t = $('[data-say]', el);
+          setTimeout(() => typeDialog(t), 500);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -6% 0px' });
+    revealTargets.forEach(el => io.observe(el));
+  } else {
+    revealTargets.forEach(el => el.classList.add('in'));
+    $$('.dialog [data-say]').forEach(typeDialog);
+  }
+
+  /* ------------------------------------------------------------
+     projects accordion
+     ------------------------------------------------------------ */
+  $$('.proj-row').forEach(row => {
+    const head = $('.proj-head', row);
+    const quote = $('.dlg-text', row);
+    let qTok = null;
+
+    const toggle = () => {
+      const open = row.classList.toggle('open');
+      head.setAttribute('aria-expanded', String(open));
+      if (qTok){ qTok.cancel = true; poke(qTok); }
+      if (open){
+        SFX.pick();
+        qTok = mkTok();
+        const tok = qTok;
+        prep(quote, quote.dataset.say);
+        (async () => {
+          await sleep(REDUCE ? 0 : 280, tok);
+          if (tok.cancel) return;
+          await type(quote, quote.dataset.say, { speed: 28, tok });
+        })();
+      }
+    };
+
+    head.addEventListener('click', toggle);
+    head.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); }
     });
   });
 
-  // fake track playback UI
-  document.querySelectorAll('.track').forEach(track => {
-    const btn = track.querySelector('.play');
+  /* ------------------------------------------------------------
+     fake track playback UI
+     ------------------------------------------------------------ */
+  const allTracks = $$('.track');
+  const stopTrack = t => {
+    t.classList.remove('playing');
+    const b = $('.play', t);
+    b.textContent = '▶';
+    b.setAttribute('aria-label', 'play');
+  };
+  allTracks.forEach(track => {
+    const btn = $('.play', track);
+    const fill = $('.bar span', track);
     btn.addEventListener('click', () => {
-      const isPlaying = track.classList.contains('playing');
-      document.querySelectorAll('.track').forEach(t => {
-        t.classList.remove('playing');
-        t.querySelector('.play').textContent = '▶';
-      });
-      if (!isPlaying){
+      const was = track.classList.contains('playing');
+      allTracks.forEach(stopTrack);
+      if (!was){
         track.classList.add('playing');
         btn.textContent = '■';
+        btn.setAttribute('aria-label', 'stop');
+        SFX.pick();
       }
     });
+    fill.addEventListener('animationend', () => stopTrack(track));
   });
+})();
 </script>
 
 </body>
